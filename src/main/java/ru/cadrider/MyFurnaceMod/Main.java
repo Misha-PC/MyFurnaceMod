@@ -14,10 +14,13 @@ public class Main {
     public static  final String MODNAME = "My furnace mod";
 
     public Block furnace;
+    public Block lit_furnace;
+    
 
 
     @EventHandler
     public void init(FMLInitializationEvent event){
-        furnace = new RedstoneFurnace("furnaceFace_0", Material.rock);
-    }
+        furnace 	= new RedstoneFurnace("furnaceFace_0", Material.rock, false);
+        lit_furnace = new RedstoneFurnace("furnaceFace_0", Material.rock, true);
+}
 }

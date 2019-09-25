@@ -34,10 +34,9 @@ public class RedstoneFurnace extends BlockContainer implements ITileEntityProvid
     private IIcon iconDown;
 
 
-    protected RedstoneFurnace(String name, Material material) {
+    protected RedstoneFurnace(String name, Material material, boolean state) {
         super(material);
-
-        this.setBlockName(name);
+        this.activated = state;
 //        this.setBlockTextureName(Main.MODID + ":" + name);
 //        this.canPlaceBlockOnSide();
         this.setCreativeTab(CreativeTabs.tabDecorations);
@@ -47,8 +46,16 @@ public class RedstoneFurnace extends BlockContainer implements ITileEntityProvid
 
 //        this.maxY = 0.25;
 
-        GameRegistry.registerBlock(this, name);
-        GameRegistry.registerTileEntity(TERedstoneFurnace.class, "name");
+        if(state) {
+        	
+            this.setBlockName("Redstone furnace lit");
+	        GameRegistry.registerBlock(this, "lit_furnace");
+	        GameRegistry.registerTileEntity(TERedstoneFurnace.class, "lit_furnace");        	
+        }else {
+            this.setBlockName("Redstone furnace");
+	        GameRegistry.registerBlock(this, "furnace");
+	        GameRegistry.registerTileEntity(TERedstoneFurnace.class, "furnace");
+        }
     }
 
     public boolean getActiv() {
@@ -59,24 +66,56 @@ public class RedstoneFurnace extends BlockContainer implements ITileEntityProvid
         super(Material.iron);
         this.activated = b;
     }
-*/
+*/   
+    
+//public boolean onBlockActivated(World p_149727_1_, int p_149727_2_, int p_149727_3_, int p_149727_4_, EntityPlayer p_149727_5_, int p_149727_6_, float p_149727_7_, float p_149727_8_, float p_149727_9_)
 
     @SideOnly(Side.CLIENT)
-    public boolean onBlockActivated(World world, int p2, int p3, int p4, EntityPlayer player, int p6, float p7, float p8, float p9) {
+    public boolean onBlockActivated(World world, int x, int y, int z, EntityPlayer player, int p6, float p7, float p8, float p9) {
         long time = Minecraft.getMinecraft().theWorld.getWorldTime();
-        if (time - 4 > lastClick) {
-            lastClick = time;
-            this.activated = !this.activated;
-            if (this.activated) {
-                Minecraft.getMinecraft().thePlayer.sendChatMessage("True: " + time);
-            } else {
-                Minecraft.getMinecraft().thePlayer.sendChatMessage("False: " + time);
-            }
-            return true;
+        if (time - 4 > lastClick){
+        	this.activated = !this.activated;
+        	  if (world.isRemote){
+        		  return true;
+        	  }
+        	    else{
+        	        TERedstoneFurnace tileentityfurnace = (TERedstoneFurnace)world.getTileEntity(x, y, z);
+        	        if (tileentityfurnace != null){
+        	        	Minecraft.getMinecraft().thePlayer.sendChatMessage("state:"+this.activated);
+        	        	tileentityfurnace.setState(this.activated);
+//        	            player.func_146101_a(tileentityfurnace);
+        	        }
+        	    }
+        	}
+        return true;
+        }
+    
+    public static void updateMyFurnaceBlockState(boolean state, World world, int x, int y, int z)
+    {
+        int l = world.getBlockMetadata(x, y, z);
+        TileEntity tileentity = world.getTileEntity(x, y, z);
+//        field_149934_M = true;
+
+        if (state)
+        {
+            world.setBlock(x, y, z, Blocks.lit_furnace);
         }
         else
-            return true;
+        {
+            world.setBlock(x, y, z, Blocks.furnace);
+        }
+
+//        field_149934_M = false;
+        world.setBlockMetadataWithNotify(x, y, z, l, 2);
+
+        if (tileentity != null)
+        {
+            tileentity.validate();
+            world.setTileEntity(x, y, z, tileentity);
+        }
     }
+
+   
 
 //    @Override
 //    public boolean isOpaqueCube(){
@@ -84,13 +123,13 @@ public class RedstoneFurnace extends BlockContainer implements ITileEntityProvid
 //    }
 
     @SideOnly(Side.CLIENT)
-    public IIcon getIcon(int x, int y)
+    public IIcon getIcon(int side, int meta)
     {
-        if(x == 1)
+        if(side == 1)
             return this.iconTop;
-        else if(x == 0)
+        else if(side == 0)
             return this.iconDown;
-        else if(x != y)
+        else if(side != meta)
             return this.blockIcon;
         else
             return this.iconFace;

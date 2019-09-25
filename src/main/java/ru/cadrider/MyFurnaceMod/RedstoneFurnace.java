@@ -20,10 +20,12 @@ import net.minecraft.util.IIcon;
 import net.minecraft.util.MathHelper;
 import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.World;
+import scala.collection.parallel.ParIterableLike;
 
 
 public class RedstoneFurnace extends BlockContainer implements ITileEntityProvider {
-    private boolean activated = false;
+    private boolean activated = true;
+    private long lastClick;
     @SideOnly(Side.CLIENT)
     private IIcon iconFace;
     @SideOnly(Side.CLIENT)
@@ -61,14 +63,19 @@ public class RedstoneFurnace extends BlockContainer implements ITileEntityProvid
 
     @SideOnly(Side.CLIENT)
     public boolean onBlockActivated(World world, int p2, int p3, int p4, EntityPlayer player, int p6, float p7, float p8, float p9) {
-        this.activated = !this.activated;
-        if(this.activated){
-          Minecraft.getMinecraft().thePlayer.sendChatMessage("True");
+        long time = Minecraft.getMinecraft().theWorld.getWorldTime();
+        if (time - 4 > lastClick) {
+            lastClick = time;
+            this.activated = !this.activated;
+            if (this.activated) {
+                Minecraft.getMinecraft().thePlayer.sendChatMessage("True: " + time);
+            } else {
+                Minecraft.getMinecraft().thePlayer.sendChatMessage("False: " + time);
+            }
+            return true;
         }
-        else{
-            Minecraft.getMinecraft().thePlayer.sendChatMessage("False");
-        }
-        return true;
+        else
+            return false;
     }
 
 //    @Override
